@@ -2,7 +2,7 @@
 import pytest
 
 from test_case.Config import ConnectAppium
-from test_case.OTAUtil import ConnectAppiumAndAction, CheckAutoWIFIDownloadBtn, CheckDownloadFinishMD5Checked
+from test_case.OTAUtil import ConnectAppiumAndAction, CheckDownloadFinishMD5Checked
 
 
 def test_main():
@@ -13,9 +13,7 @@ def test_main():
     ConnectAppiumAndAction()
     ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/btn_main').click()
     ConnectAppium.driver.implicitly_wait(3)
-    CheckDownloadFinishMD5Checked()
-    downloadprogress = ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/main_function_tv').text
-    assert 'The update package is ready' in downloadprogress, '判断下载更新包完成后校验MD5值成功'
+    assert CheckDownloadFinishMD5Checked() == 2, '判断下载更新包完成后校验MD5值失败后点击重新下载，停止重试'
 
 
 if __name__ == '__main__':

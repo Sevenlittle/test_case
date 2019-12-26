@@ -3,7 +3,9 @@ import subprocess
 # 引入appium库中和webdriver包
 import time
 
-from test_case.Config import ConnectAppium, appPackage, appActivity
+from selenium.common.exceptions import NoSuchElementException
+
+from test_case.Config import ConnectAppium, appPackage, appActivity, platformName, platformVersion, deviceName
 
 
 def ConnectAppiumAndAction():
@@ -251,22 +253,119 @@ def ExceptionConnectionHandler():
 
 
 def CheckDownloadFinishMD5Checked():
-    downloadbtn = ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/btn_main').text
     dengdai = 99
+    CheckResult = 0
     while dengdai < 100:
-        if 'Reboot the update' in downloadbtn:
+        if 'Reboot the update' in ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/btn_main').text:
             print('UpdatePackage download finish -100%')
-            dengdai = 100
-        elif downloadbtn == 'Continue to download':
-            print('Stop downloading, now continue to download!')
+            dengdai = 101
+            CheckResult = 1
+        elif 'Download again' in ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/btn_main').text:
             ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/btn_main').click()
-            ConnectAppium.driver.implicitly_wait(5)
-            dengdai = dengdai - 1
+            dengdai = 101
+            CheckResult = 2
         else:
             print('Have not finished download, wait for 3-seconds to continue download! ')
             ConnectAppium.driver.implicitly_wait(5)
             # ExceptionConnectionHandler()
             dengdai = dengdai - 1
+            CheckResult = 0
+    return CheckResult
+
+
+def ClearAppData(appname):
+    ConnectAppium.driver.start_activity('com.android.settings', 'com.android.settings.Settings')
+    ConnectAppium.driver.implicitly_wait(5)
+    print("Success:切换进入设置应用成功")
+    _find_by_scroll('Apps')
+    ConnectAppium.driver.implicitly_wait(10)
+    _findapp_by_scroll(appname)
+    ConnectAppium.driver.implicitly_wait(5)
+    storage = ConnectAppium.driver.find_element_by_android_uiautomator('new UiSelector().text("Storage")')
+    ConnectAppium.driver.implicitly_wait(3)
+    storage.click()
+    ConnectAppium.driver.implicitly_wait(3)
+    cleardata = ConnectAppium.driver.find_element_by_android_uiautomator('new UiSelector().text("Clear data")')
+    ConnectAppium.driver.implicitly_wait(3)
+    cleardata.click()
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('android:id/button1').click()
+    ConnectAppium.driver.implicitly_wait(3)
+
+
+def CheckOTAFullStorageTips():
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('cn.test.filldata:id/edit_fill_percent_value').clear()
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('cn.test.filldata:id/edit_fill_percent_value').send_keys('100')
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('cn.test.filldata:id/btn_start_fill').click()
+    i = 0
+    while i >= 0:
+        if isElement('id', 'android:id/alertTitle'):
+            print('提示内存空间不足，点击取消')
+            ConnectAppium.driver.find_element_by_id('android:id/button1').click()
+            ConnectAppium.driver.implicitly_wait(5)
+            i = i + 1
+        elif ConnectAppium.driver.find_element_by_id('cn.test.filldata:id/text_available_space_value').text == '0MB':
+            print('填充完成，退出应用')
+            i = -1
+        else:
+            print('填充中，继续等待...')
+            ConnectAppium.driver.implicitly_wait(5)
+            i = i + 1
+    ConnectAppium.driver.implicitly_wait(60)
+    if 'Internal storage running out' in ConnectAppium.driver.find_element_by_id('android:id/alertTitle').text:
+        ConnectAppium.driver.find_element_by_id('android:id/button1').click()
+    ConnectAppium.driver.implicitly_wait(10)
+    if isElement('id', 'android:id/alertTitle'):
+        ConnectAppium.driver.find_element_by_id('android:id/button1').click()
+        ConnectAppium.driver.implicitly_wait(5)
+    # ConnectAppium.driver.start_activity(appPackage, appActivity)
+    comm = 'adb shell am start -n com.sunmi.ota/com.sunmi.ota.ui.activity.UpgradeActivity'
+    text1 = os.popen(comm)
+    context1 = text1.read()
+    print(context1)
+
+
+def ReleaseFillDataApp():
+    ConnectAppium.driver.start_activity('cn.test.filldata', 'cn.test.filldata.FillData')
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('cn.test.filldata:id/btn_clean_data').click()
+    ConnectAppium.driver.implicitly_wait(5)
+
+
+def isElement(identifyBy,c):
+    """
+    Determine whether elements exist
+    Usage:
+    isElement(By.XPATH,"//a")
+    """
+    flag=None
+    try:
+        if identifyBy == "id":
+            # self.driver.implicitly_wait(60)
+            ConnectAppium.driver.find_element_by_id(c)
+        elif identifyBy == "xpath":
+            # self.driver.implicitly_wait(60)
+            ConnectAppium.driver.find_element_by_xpath(c)
+        elif identifyBy == "class":
+            ConnectAppium.driver.find_element_by_class_name(c)
+        elif identifyBy == "link text":
+            ConnectAppium.driver.find_element_by_link_text(c)
+        elif identifyBy == "partial link text":
+            ConnectAppium.driver.find_element_by_partial_link_text(c)
+        elif identifyBy == "name":
+            ConnectAppium.driver.find_element_by_name(c)
+        elif identifyBy == "tag name":
+            ConnectAppium.driver.find_element_by_tag_name(c)
+        elif identifyBy == "css selector":
+            ConnectAppium.driver.find_element_by_css_selector(c)
+        flag = True
+    except NoSuchElementException as e:
+        flag = False
+    finally:
+        return flag
 
 
 def _find_by_scroll(item_name):
@@ -274,6 +373,16 @@ def _find_by_scroll(item_name):
         ('new UiScrollable(new UiSelector().resourceId("com.android.settings:id/dashboard")).'
          'scrollIntoView(new UiSelector().textContains("'
          + item_name + '"))')
+    ConnectAppium.driver.implicitly_wait(5)
+    item.click()
+
+
+def _findapp_by_scroll(app_item_name):
+    time.sleep(20)
+    item = ConnectAppium.driver.find_element_by_android_uiautomator \
+        ('new UiScrollable(new UiSelector().resourceId("android:id/list")).'
+         'scrollIntoView(new UiSelector().textContains("'
+         + app_item_name + '"))')
     ConnectAppium.driver.implicitly_wait(5)
     item.click()
 
