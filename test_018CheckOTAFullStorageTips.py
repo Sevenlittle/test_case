@@ -25,12 +25,12 @@ def test_main():
     ConnectAppium.driver.implicitly_wait(3)
     FlagTips = 0
     if isElement('id', 'com.sunmi.ota:id/dialog_title'):
-        print('提示内存空间不足，点击取消')
+        print('Success：进入系统更新应用，提示内存空间不足，点击取消退出应用')
         ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/cancle').click()
         ConnectAppium.driver.implicitly_wait(5)
         FlagTips = 1
     elif isElement('id', 'android:id/button1'):
-        print('提示内存空间不足，点击取消')
+        print('Success：进入系统更新应用，提示内存空间不足，点击取消退出应用')
         ConnectAppium.driver.find_element_by_id('android:id/button1').click()
         ConnectAppium.driver.implicitly_wait(5)
         FlagTips = 1

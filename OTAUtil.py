@@ -368,6 +368,108 @@ def isElement(identifyBy,c):
         return flag
 
 
+def CheckOTAIsRunAtBackground():
+    if isElement('id', 'com.woyou.launcher:id/workspace'):
+        print('当前界面在主菜单界面，不在系统更新应用')
+    else:
+        print('当前界面不在主菜单界面，按HOME键返回主界面')
+        ConnectAppium.driver.keyevent(3)
+        return False
+    comm = 'adb shell "ps | grep ota"'
+    runatbackground = os.popen(comm)
+    context = runatbackground.read()
+    print(context)
+    if 'com.sunmi.ota' in context:
+        print('系统更新应用运行在后台')
+        return True
+    else:
+        print('系统更新应用不在后台运行')
+        return False
+
+
+def ClearBackgroundApps():
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.keyevent(187)
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('com.android.systemui:id/clean').click()
+    ConnectAppium.driver.implicitly_wait(3)
+    print('后台任务清除完成！')
+
+
+def CheckOTAPushToast():
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/iv_function').click()
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/tv_update_settings').click()
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.save_screenshot('Test020_BeforeChangeWIFIBtn.png')
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/switch_button').click()
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.save_screenshot('Test020_AfterChangeWIFIBtn.png')
+    ClearBackgroundApps()
+    comm = 'adb shell "am broadcast -a com.sunmi.ota"'
+    pushotatoast = os.popen(comm)
+    context = pushotatoast.read()
+    print(context)
+    ConnectAppium.driver.implicitly_wait(5)
+    ConnectAppium.driver.open_notifications()
+    ConnectAppium.driver.implicitly_wait(5)
+    if 'discovered, please update!' in ConnectAppium.driver.find_element_by_id('android:id/text').text:
+        print('Success：通知栏中找到了新版本消息提醒通知')
+        ConnectAppium.driver.keyevent(4)
+        return True
+    else:
+        print('Fail：通知栏中未找到了新版本消息提醒通知')
+        ConnectAppium.driver.keyevent(4)
+        return False
+
+
+def CheckDownloadSpeedBelowLimitedSpeed(settingspeed):
+    CheckChangeWIFIDownloadSpeed(settingspeed)
+    num = settingspeed[:-4]
+    print('设置的下载速度为', settingspeed)
+    if 'MB/s' in settingspeed:
+        num1 = string_to_float(num)*1024
+    elif 'Speed not limited' in settingspeed:
+        num1 = 100000
+    elif 'KB/s' in settingspeed:
+        num1 = string_to_float(num)
+    print('设置的下载速度在截取字符串之后转换KB为', num1)
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/btn_main').click()
+    ConnectAppium.driver.implicitly_wait(3)
+    time.sleep(3)
+    if CorrentDownloadSpeed() - num1 > 0:
+        print('Fail：当前下载速度在设置速度值之上')
+        return False
+    else:
+        print('Success：当前下载速度在设置速度值之下')
+        return True
+
+
+def CorrentDownloadSpeed():
+    currentspeed = ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/tv_current_speed').text
+    if len(currentspeed) == 0:
+        print('当前获取下载速度为空，等待3秒继续获取下载速度')
+        time.sleep(3)
+    else:
+        print('当前下载速度为：', currentspeed)
+        currentspeed1 = currentspeed[:-4]
+        if 'MB/s' in currentspeed:
+            num2 = string_to_float(currentspeed1) * 1024
+        elif 'Speed not limited' in currentspeed:
+             num2 = 100000
+        elif 'KB/s' in currentspeed:
+            num2 = string_to_float(currentspeed1)
+        print('当前的下载速度在截取字符串之后转换KB为', num2)
+    return num2
+
+
+def string_to_float(str):
+    return float(str)
+
+
 def _find_by_scroll(item_name):
     item = ConnectAppium.driver.find_element_by_android_uiautomator \
         ('new UiScrollable(new UiSelector().resourceId("com.android.settings:id/dashboard")).'
