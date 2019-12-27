@@ -11,7 +11,7 @@ def test_main():
     ConnectAppium.driver.start_session(ConnectAppium.desired_caps, None)
     print("断开重新建立APPIUM连接成功")
     ConnectAppiumAndAction()
-    assert CheckDownloadSpeedBelowLimitedSpeed('10.00MB/s') == True, '判断当前界面是否在系统更新界面'
+    assert CheckDownloadSpeedBelowLimitedSpeed('10.00MB/s') == True, '判断当前下载速度设置后，实际下载速度是否在设置速度值下方'
 
 
 if __name__ == '__main__':

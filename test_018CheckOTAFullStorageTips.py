@@ -10,6 +10,9 @@ from test_case.OTAUtil import ConnectAppiumAndAction, CheckDownloadFinishMD5Chec
 
 def test_main():
     # 通过webdriver包下面的Remote方法打开App
+    ConnectAppium.DisConnectAppium()
+    ConnectAppium.driver.start_session(ConnectAppium.desired_caps, None)
+    print("断开重新建立APPIUM连接成功")
     ConnectAppiumAndAction()
     ClearAppData('System Update')
     ConnectAppium.DisConnectAppium()

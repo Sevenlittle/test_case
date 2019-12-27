@@ -361,11 +361,49 @@ def isElement(identifyBy,c):
             ConnectAppium.driver.find_element_by_tag_name(c)
         elif identifyBy == "css selector":
             ConnectAppium.driver.find_element_by_css_selector(c)
+        elif identifyBy == "text":
+            ConnectAppium.driver.find_element_by_android_uiautomator('new UiSelector().text("'+c+'")')
         flag = True
     except NoSuchElementException as e:
         flag = False
     finally:
         return flag
+
+
+def CheckChangelogLanguageContainChinese():
+    ConnectAppium.driver.start_activity(appPackage, appActivity)
+    ConnectAppium.driver.implicitly_wait(3)
+    ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/iv_arrow').click()
+    ConnectAppium.driver.implicitly_wait(3)
+    logcontext = ConnectAppium.driver.find_element_by_id('com.sunmi.ota:id/version_content_tv').text
+    for _char in logcontext:
+        if '\u4e00' <= _char <= '\u9fa5':
+            print('日志语言中包含中文，判断为中文')
+            return True
+    return False
+
+
+def GetAndSetSystemLanguage(language):
+    # language include '中文 (简体)' / 'English (United States)'
+    ConnectAppium.driver.start_activity('com.android.settings', 'com.android.settings.Settings')
+    ConnectAppium.driver.implicitly_wait(5)
+    print("Success:切换进入设置应用成功")
+    if '无线和网络' == ConnectAppium.driver.find_element_by_id('com.android.settings:id/category_title').text:
+        _find_by_scroll('语言和输入法')
+    elif 'Wireless & networks' in ConnectAppium.driver.find_element_by_id('com.android.settings:id/category_title').text:
+        _find_by_scroll('Language & input')
+    ConnectAppium.driver.implicitly_wait(5)
+    if language in ConnectAppium.driver.find_element_by_id('android:id/summary').text:
+        print('Success to get System language, System Language is equal to language', ConnectAppium.driver.find_element_by_id('android:id/summary').text)
+    else:
+        ConnectAppium.driver.find_element_by_id('android:id/summary').click()
+        ConnectAppium.driver.implicitly_wait(5)
+        _find_item_by_scroll(language)
+        ConnectAppium.driver.implicitly_wait(5)
+        if language in ConnectAppium.driver.find_element_by_id('android:id/summary').text:
+            print('Success to set language')
+        else:
+            print('Fail to set Language!')
 
 
 def CheckOTAIsRunAtBackground():
@@ -470,6 +508,19 @@ def string_to_float(str):
     return float(str)
 
 
+def _find_item_by_scroll(item_name):
+    i = 1
+    while i > 0:
+        if isElement('text', item_name):
+            ConnectAppium.driver.find_element_by_android_uiautomator('new UiSelector().text("'+item_name+'")').click()
+            ConnectAppium.driver.implicitly_wait(5)
+            i = -1
+        else:
+            ConnectAppium.driver.swipe(400, 500, 400, 100, 1000)
+            time.sleep(3)
+            i = i + 1
+
+
 def _find_by_scroll(item_name):
     item = ConnectAppium.driver.find_element_by_android_uiautomator \
         ('new UiScrollable(new UiSelector().resourceId("com.android.settings:id/dashboard")).'
@@ -489,18 +540,18 @@ def _findapp_by_scroll(app_item_name):
     item.click()
 
 
-def getSize(driver):
-    x = driver.get_window_size()['width']
-    y = driver.get_window_size()['height']
+def get_size():
+    x = ConnectAppium.driver.get_window_size()['width']
+    y = ConnectAppium.driver.get_window_size()['height']
     return x, y
 
 
-def swipeUp(driver, t):
-    l = getSize()
+def swipeUp():
+    l = get_size()
     x1 = int(l[0] * 0.5)  # x坐标
     y1 = int(l[1] * 0.75)  # 起始y坐标
-    y2 = int(l[1] * 0.25)  # 终点y坐标
-    driver.swipe(x1, y1, x1, y2, t)
+    y2 = int(l[0] * 0.25)  # 终点y坐标
+    ConnectAppium.driver.swipe(x1, y1, x1, y2, 1000)
 
 
 def adbScreenOn(self):
